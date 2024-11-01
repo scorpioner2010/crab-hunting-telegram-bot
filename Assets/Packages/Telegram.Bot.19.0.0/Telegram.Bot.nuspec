@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Telegram.Bot</id>
+    <version>19.0.0</version>
+    <title>Telegram Bot API Client</title>
+    <authors>RoundRobin,Poulad,tuscen</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>package-icon.png</icon>
+    <projectUrl>https://github.com/TelegramBots/telegram.bot</projectUrl>
+    <description>The Bot API is an HTTP-based interface created for developers keen on building bots for Telegram.</description>
+    <copyright>Copyright © Robin Müller 2016</copyright>
+    <tags>Telegram Bot Api Payment Inline Games</tags>
+    <repository type="git" url="https://github.com/TelegramBots/telegram.bot.git" commit="6fe1f1e274f8663c6fe3bcdf7cc504598124a2f1" />
+    <dependencies>
+      <group targetFramework="net6.0">
+        <dependency id="Newtonsoft.Json" version="13.0.1" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Newtonsoft.Json" version="13.0.1" exclude="Build,Analyzers" />
+        <dependency id="System.ComponentModel.Annotations" version="5.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Threading.Tasks.Extensions" version="4.5.4" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
