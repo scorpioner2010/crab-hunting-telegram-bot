@@ -8,106 +8,100 @@ using System.Threading.Tasks;
 
 public class TelegramBotManager : MonoBehaviour
 {
-    private static ITelegramBotClient botClient;
+    private ITelegramBotClient botClient;
     private CancellationTokenSource cts;
     public string myToken;
 
+    private const string GameCommand = "/getgame";
+    private const string GameLink = "https://scorpioner2010.github.io/crab-hunting-build/";
+    private const string GameShortName = "coinclicker";
+    private const string HelpMessage = "Commands:\n/getgame - Get a link to the game.";
+
     void Start()
     {
-        botClient = new TelegramBotClient(myToken); // Replace with your bot token
+        botClient = new TelegramBotClient(myToken);
         cts = new CancellationTokenSource();
 
-        // Start receiving updates using Polling
-        var receiverOptions = new ReceiverOptions
-        {
-            AllowedUpdates = { } // Receive all update types
-        };
-
+        var receiverOptions = new ReceiverOptions { AllowedUpdates = { } }; // Receive all update types
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, receiverOptions, cancellationToken: cts.Token);
-        ConsoleController.Log("Bot started!");
+
+        Debug.Log("Bot started!");
     }
 
-    async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken cancellationToken)
     {
         if (update == null)
         {
-            ConsoleController.LogError("Update is null.");
+            Debug.LogError("Update is null.");
             return;
         }
 
-        // Log received messages
         if (update.Message != null)
         {
-            ConsoleController.Log("Received message: " + update.Message.Text);
+            await HandleMessageAsync(update.Message);
+        }
+        else if (update.CallbackQuery != null)
+        {
+            await HandleCallbackQueryAsync(update.CallbackQuery);
+        }
+    }
+
+    async Task HandleMessageAsync(Message message)
+    {
+        Debug.Log($"Received message: {message.Text}");
+
+        if (string.IsNullOrEmpty(message.Text))
+        {
+            Debug.LogWarning("Received an empty message.");
+            return;
+        }
+
+        switch (message.Text.ToLower())
+        {
+            case GameCommand:
+                await SendGameAsync(message.Chat.Id);
+                break;
+            default:
+                await SendHelpMessageAsync(message.Chat.Id);
+                break;
+        }
+    }
+
+    async Task HandleCallbackQueryAsync(CallbackQuery callbackQuery)
+    {
+        if (callbackQuery.Message == null)
+        {
+            Debug.LogWarning("CallbackQuery has no message.");
+            return;
+        }
+
+        if ((DateTime.UtcNow - callbackQuery.Message.Date).TotalSeconds > 60)
+        {
+            Debug.Log("Request is outdated, notifying user.");
+            await botClient.SendTextMessageAsync(callbackQuery.Message.Chat.Id, "The link is outdated. Please request a new link using the command /getgame.");
         }
         else
         {
-            ConsoleController.LogError("Message is null.");
+            Debug.Log("Sending game link.");
+            await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, url: GameLink);
         }
+    }
 
-        try
-        {
-            // Check for /getgametaras command
-            if (update.Type == Telegram.Bot.Types.Enums.UpdateType.Message && update.Message != null)
-            {
-                var message = update.Message;
+    async Task SendGameAsync(long chatId)
+    {
+        Debug.Log("Sending game link.");
+        await botClient.SendGameAsync(chatId, GameShortName);
+    }
 
-                bool result = !string.IsNullOrEmpty(message.Text);
-                
-                if (result && message.Text.ToLower() == "/getgametaras")
-                {
-                    ConsoleController.Log("/getgametaras received, sending game.");
-
-                    await botClient.SendGameAsync(
-                        chatId: message.Chat.Id, // Chat ID for the game
-                        gameShortName: "coinclicker" // Game short name
-                    );
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            ConsoleController.LogError($"Error processing command: {ex.Message}");
-        }
-
-        try
-        {
-            // Handle callback queries
-            if (update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery && update.CallbackQuery != null)
-            {
-                var callbackQuery = update.CallbackQuery;
-
-                // Check if the request is outdated
-                if (callbackQuery.Message != null && (DateTime.UtcNow - callbackQuery.Message.Date).TotalSeconds > 60)
-                {
-                    ConsoleController.Log("Request is outdated, notifying user.");
-
-                    // Send a message to the user indicating the link is outdated
-                    await botClient.SendTextMessageAsync(
-                        chatId: callbackQuery.Message.Chat.Id,
-                        text: "The link is outdated. Please request a new link using the command /getgametaras."
-                    );
-                    return;
-                }
-
-                // Send game link
-                await botClient.AnswerCallbackQueryAsync(
-                    callbackQueryId: callbackQuery.Id,
-                    url: "https://scorpioner2010.github.io/CoinsDemoBot/" // Game URL
-                );
-
-                ConsoleController.Log("Game link sent.");
-            }
-        }
-        catch (Exception ex)
-        {
-            ConsoleController.LogError($"Error handling callback query: {ex.Message}");
-        }
+    async Task SendHelpMessageAsync(long chatId)
+    {
+        Debug.Log("Sending help message.");
+        await botClient.SendTextMessageAsync(chatId, HelpMessage);
     }
 
     Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        ConsoleController.LogError($"Error: {exception.Message}");
+        Debug.LogError($"Error: {exception.Message}");
         return Task.CompletedTask;
     }
 

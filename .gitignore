@@ -2,3 +2,12 @@
 Temp
 Logs
 Logs
+.idea
+Logs
+UserSettings
+obj
+*.csproj
+Logs
+Assembly-CSharp.csproj
+UserSettings
+obj
